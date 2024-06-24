@@ -4,3 +4,5 @@ ToolSet/datasets
 *.jpg
 *.json
 *.txt
+*.png
+*.yaml
