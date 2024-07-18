@@ -1,4 +1,6 @@
 dataset
+cache
+runs
 *.pth
 *.pyc
 *.mp4
@@ -7,3 +9,5 @@ dataset
 *.txt
 *.png
 *.yaml
+*.pt
+*.out

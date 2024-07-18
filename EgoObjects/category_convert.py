@@ -109,20 +109,20 @@ def main():
     MetadataCatalog.get(dataset_name).set(**metadata)
     metadata = MetadataCatalog.get(dataset_name)
 
-    # split = 'train'
-    # gt = EgoObjects(dataset + "EgoObjectsV1_unified_train.json", metadata, filter_opts=FILTER_OPTS[f"egoobjects_cat_det_train"])
-    # category_distribution(gt, split)
-    # yolo_convert(gt, split)
-
-    split = 'val'
-    gt = EgoObjects(dataset + "EgoObjectsV1_unified_eval.json", metadata, filter_opts=FILTER_OPTS[f"egoobjects_cat_det_train"])
+    split = 'train'
+    gt = EgoObjects(dataset + "EgoObjectsV1_unified_train.json", metadata, filter_opts=FILTER_OPTS[f"egoobjects_cat_det_train"])
     category_distribution(gt, split)
     yolo_convert(gt, split)
+
+    # split = 'val'
+    # gt = EgoObjects(dataset + "EgoObjectsV1_unified_eval.json", metadata, filter_opts=FILTER_OPTS[f"egoobjects_cat_det_train"])
+    # category_distribution(gt, split)
+    # yolo_convert(gt, split)
 
     
    
 
-    # yaml_file = 'egoobjects.yaml'
+    # yaml_file = 'EgoObjects.yaml'
     # with open(yaml_file, 'w') as f:
     #     cat_map = {key-1: value['name'] for key, value in gt.cats['cat_det'].items()}
     #     yaml.dump({'names': cat_map, 'nc': len(gt.cats['cat_det']), 'path': '../dataset/EgoObjects/', 'train': 'train.txt', 
