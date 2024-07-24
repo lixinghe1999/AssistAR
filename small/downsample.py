@@ -1,26 +1,45 @@
 import os
-def down_sample(data_folder = 'dataset/v2/clips',  output_folder = 'dataset/v2/downsampled', split_frames = True):
+def downsample_clip(data_folder = 'dataset/v2/clips',  output_folder = 'dataset/v2/downsampled', clip=None, split_frames=True):
     '''
     Simulate the downsample process of the video clips on smart glasses
     '''
-    ffmpeg_command1 = 'ffmpeg -i {} -c:v h264  -b:v 150k -x264-params keyint=30:scenecut=0 -s 640x480 {} -y'
-    ffmpeg_command2 = 'ffmpeg -i {} -vf fps=10 {} -y'
-    for clip in os.listdir(data_folder):
-        clip_path = os.path.join(data_folder, clip)
-        output_path = os.path.join(output_folder, clip)
-        _ffmpeg_command = ffmpeg_command1.format(clip_path, output_path)
+    ffmpeg_command1 = 'ffmpeg -i {} -c:v h264  -b:v 150k -x264-params keyint=30:scenecut=0 -vf "scale=640:-2" {} -y -loglevel quiet'
+    ffmpeg_command2 = 'ffmpeg -i {} -vf fps=30 {} -y -loglevel quiet'
+    clip_path = os.path.join(data_folder, clip)
+    output_path = os.path.join(output_folder, clip)
+    _ffmpeg_command = ffmpeg_command1.format(clip_path, output_path)
+    os.system(_ffmpeg_command)
+    ori_size, out_size = os.path.getsize(clip_path), os.path.getsize(output_path)
+    print('Original:', ori_size, 'Downsampled:', out_size, 'ratio', out_size/ori_size)
+    if split_frames: # split video to frames
+        os.makedirs(output_path[:-4], exist_ok=True)
+        _ffmpeg_command = ffmpeg_command2.format(output_path, output_path[:-4] + '/%04d.jpg')
         os.system(_ffmpeg_command)
-        ori_size, out_size = os.path.getsize(clip_path), os.path.getsize(output_path)
-        print('Original:', ori_size, 'Downsampled:', out_size, 'ratio', out_size/ori_size)
-        if split_frames: # split video to frames
-            os.makedirs(output_path[:-4], exist_ok=True)
-            _ffmpeg_command = ffmpeg_command2.format(output_path, output_path[:-4] + '/%04d.jpg')
-            os.system(_ffmpeg_command)
-            frames_size = sum([os.path.getsize(os.path.join(output_path[:-4], frame)) for frame in os.listdir(output_path[:-4])]) 
-            print('Original:', ori_size, 'frames_size', frames_size, 'ratio', frames_size/ori_size)
-        break
+        frames_size = sum([os.path.getsize(os.path.join(output_path[:-4], frame)) for frame in os.listdir(output_path[:-4])]) 
+        print('Original:', ori_size, 'frames_size', frames_size, 'ratio', frames_size/ori_size)
+        os.remove(output_path)
+        
+def split_frames(data_folder = 'dataset/v2/clips',  output_folder = 'dataset/v2/downsampled', clip=None, split_frames=True):
+    '''
+    Simulate the downsample process of the video clips on smart glasses
+    '''
+    ffmpeg_command2 = 'ffmpeg -i {} -vf fps=30 {} -y -loglevel quiet'
+    clip_path = os.path.join(data_folder, clip)
+    output_path = os.path.join(output_folder, clip)
 
-def attention_h264(input_video='input_video.mp4', method='blur', roi=(100, 100, 300, 200)):
+    os.makedirs(output_path[:-4], exist_ok=True)
+    _ffmpeg_command = ffmpeg_command2.format(clip_path, output_path[:-4] + '/%04d.jpg')
+    os.system(_ffmpeg_command)
+
+    ori_size = os.path.getsize(clip_path)
+    frames_size = sum([os.path.getsize(os.path.join(output_path[:-4], frame)) for frame in os.listdir(output_path[:-4])])
+    print('Original:', ori_size, 'frames_size', frames_size, 'ratio', frames_size/ori_size)
+
+def roi_h264(input_video='input_video.mp4', method='blur', roi=(100, 100, 300, 200)):
+    '''
+    please use the following to make sure opencv is ok with h264
+    conda install -c conda-forge opencv
+    '''
     import cv2
     import os
 
@@ -36,9 +55,9 @@ def attention_h264(input_video='input_video.mp4', method='blur', roi=(100, 100, 
     roi_x, roi_y, roi_width, roi_height = roi
     roi_ratio = (roi_height * roi_width) / (width * height)
 
-    codec = int(cap.get(cv2.CAP_PROP_FOURCC))
-    fourcc = cv2.VideoWriter_fourcc(*[chr(codec & 0XFF), chr((codec >> 8) & 0XFF), chr((codec >> 16) & 0XFF), chr((codec >> 24) & 0XFF)])
-    # fourcc = cv2.VideoWriter_fourcc(*'avc1') 
+    # codec = int(cap.get(cv2.CAP_PROP_FOURCC))
+    # fourcc = cv2.VideoWriter_fourcc(*[chr(codec & 0XFF), chr((codec >> 8) & 0XFF), chr((codec >> 16) & 0XFF), chr((codec >> 24) & 0XFF)])
+    fourcc = cv2.VideoWriter_fourcc(*'avc1') 
 
     out_roi = cv2.VideoWriter(input_video.replace('.mp4', '_roi.mp4'), fourcc, fps, (width, height))
     blur_kernel_size = (15, 15)
@@ -73,7 +92,7 @@ def attention_h264(input_video='input_video.mp4', method='blur', roi=(100, 100, 
     cap.release()
     out_roi.release()
     ori_size, roi_size = os.path.getsize(input_video), os.path.getsize(input_video.replace('.mp4', '_roi.mp4'))
-    print('Original:', ori_size, 'ROI size:', roi_size, 'ratio', roi_size/ori_size, 'ROI ratio', roi_ratio)
+    print('ratio', round(roi_size/ori_size,3 ), 'ROI ratio', round(roi_ratio,3))
 def crop_first_second(input_video='input_video.mp4', output_video='output_video.mp4'):
     import ffmpeg
     # Load the input video
@@ -85,7 +104,6 @@ def crop_first_second(input_video='input_video.mp4', output_video='output_video.
     # Output the cropped video
     output_video = ffmpeg.output(cropped_video, output_video)
     ffmpeg.run(output_video)
-
 def evaluation_psnr(input_video='input_video.mp4', output_video='output_video.mp4', roi=(100, 100, 300, 200)):
     import cv2
     cap1 = cv2.VideoCapture(input_video)
@@ -121,7 +139,7 @@ def evaluation_psnr(input_video='input_video.mp4', output_video='output_video.mp
     # Calculate the average PSNR
     avg_psnr = psnr_sum / frame_count
 
-    print(f"The average PSNR between the two videos is: {avg_psnr:.2f} dB")
+    print(f"The PSNR: {avg_psnr:.2f} dB under {roi} ROI")
 
     # Release the video capture objects
     cap1.release()
@@ -129,10 +147,14 @@ def evaluation_psnr(input_video='input_video.mp4', output_video='output_video.mp
     return avg_psnr
 
 if __name__ == '__main__':
-    # down_sample(split_frames=False)
+    # down_sample(split_frames=True)
     # crop_first_second('dataset/example/orange_pick.mp4', 'dataset/example/orange_pick_cropped.mp4')
     # blur_ffmpeg('dataset/example/orange_pick_cropped.mp4')
     
-    attention_h264('dataset/example/orange_pick_cropped.mp4', method='mask', roi=(100, 100, 300, 200))
+    roi_h264('dataset/example/orange_pick_cropped.mp4', method='mask', roi=(100, 100, 300, 200))
+    evaluation_psnr('dataset/example/orange_pick_cropped.mp4', 'dataset/example/orange_pick_cropped_roi.mp4', roi=(100, 100, 300, 200)) 
+    evaluation_psnr('dataset/example/orange_pick_cropped.mp4', 'dataset/example/orange_pick_cropped_roi.mp4', roi=None) 
+
+    roi_h264('dataset/example/orange_pick_cropped.mp4', method='blur', roi=(100, 100, 300, 200))
     evaluation_psnr('dataset/example/orange_pick_cropped.mp4', 'dataset/example/orange_pick_cropped_roi.mp4', roi=(100, 100, 300, 200)) 
     evaluation_psnr('dataset/example/orange_pick_cropped.mp4', 'dataset/example/orange_pick_cropped_roi.mp4', roi=None) 

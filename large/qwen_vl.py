@@ -1,10 +1,10 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.generation import GenerationConfig
 import time
-def init_qwenvl():
+def init_qwenvl(device='cuda'):
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
 
-    model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map="cuda", trust_remote_code=True, cache_dir='./cache').eval()
+    model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map=device, trust_remote_code=True, cache_dir='./cache').eval()
     model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
     return model, tokenizer
 def inference_qwenvl(model, tokenizer, image_file, detection_prompt='get the location of the handclap'):
