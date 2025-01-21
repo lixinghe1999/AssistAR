@@ -66,7 +66,12 @@ def filter_dataset_category(keep_class=[0]):
         keep_num.append(len(tmp_txt))
     return keep_num, data['names']
 
-def filter_dataset_scenario(keep_scenario=[0]):
+def filter_dataset_scenario(keep_scenario=[0], synthetic_error=0):
+    '''
+    EgoObjects contains multiple scenarios: a short video, within the scenario, the instance and object are roughly keep the same
+    keep_scenario: a list of scenario index to keep, e.g., 0 refers to a cat scenario
+    
+    '''
     dataset_dir = 'dataset/EgoObjects/mini_scenario/' + '_'.join([str(i) for i in keep_scenario])
     orig_dataset_dir = 'dataset/EgoObjects'
 
@@ -114,9 +119,13 @@ def filter_dataset_scenario(keep_scenario=[0]):
     print('Done filtering', f'keep files {len(idxs)}/{len(lines)}')
 
     # keep the same way of naming
-    os.system(f'cp {orig_dataset_dir}/EgoObjects.yaml {dataset_dir}/EgoObjects.yaml')
-    with open(os.path.join(dataset_dir, 'EgoObjects.yaml'), 'r') as file:
+    import yaml
+    with open('{}/EgoObjects.yaml'.format(orig_dataset_dir), 'r') as file:
         data = yaml.load(file, Loader=yaml.FullLoader)
+    data['path'] = dataset_dir
+    with open(os.path.join(dataset_dir, 'EgoObjects.yaml'), 'w') as file:
+        yaml.dump(data, file)
+
     possible_class = []
     for line in idxs:
         label_path = line.replace('images', 'labels').replace('jpg', 'txt')
@@ -130,6 +139,7 @@ def filter_dataset_scenario(keep_scenario=[0]):
     possible_class_name = {i:data['names'][i] for i in possible_class}
     print('Possible classes:', possible_class_name)
     return possible_class_name
+
 if __name__ == '__main__':
     # filter_dataset_category([150])
     filter_dataset_scenario([0])

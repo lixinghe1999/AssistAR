@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from model.yolo_world import init_yoloworld, inference_yoloworld, parser_yoloworld
+from model import init_builder, inference_builder, parser_builder
 from model.api import request_detection, parser_api
 import os
 from tqdm import tqdm
@@ -33,6 +34,10 @@ def bbox_to_yolo(output_label_path, ref, bbox, class_map):
     
 
 def inference_scenario(keep_scenario, model_name):
+    init_func = init_builder(model_name)
+    inference_func = inference_builder(model_name)
+    parser_func = parser_builder(model_name)
+
     class_map = filter_dataset_scenario(keep_scenario)
     dataset_dir = 'dataset/EgoObjects/mini_scenario/{}'.format('_'.join([str(i) for i in keep_scenario]))
     image_dir = os.path.join(dataset_dir, 'images')
@@ -50,11 +55,13 @@ def inference_scenario(keep_scenario, model_name):
     prompt = list(class_map.values())
     images = os.listdir(image_dir)
     images.sort()
-    model = init_yoloworld(model_name + '.pt')
+    model = init_func(model_name)
     for i, image in enumerate(tqdm(images)):
         image_path = os.path.join(image_dir, image)
-        response = inference_yoloworld(model, image_path, prompt)
-        ref, box = parser_yoloworld(response)
+
+        response = inference_func(model, image_path, prompt)
+        ref, box = parser_func(response)
+
         output_image_path = os.path.join(output_image_dir, image)
         output_label_path = os.path.join(output_label_dir, image.replace('.jpg', '.txt'))
         if len(box) > 0:
@@ -65,8 +72,8 @@ def inference_scenario(keep_scenario, model_name):
             os.system(f'cp {image_path} {output_image_path}')
             with open(output_label_path, 'w') as f:
                 f.write('')
-        if i == 10:
-            break
+        # if i == 10:
+        #     break
     evaluate(dataset_dir, output_dir)
 
 def inference_api(keep_scenario):
@@ -106,11 +113,14 @@ def inference_api(keep_scenario):
         #     break
         time.sleep(10)
     evaluate(dataset_dir, output_dir)
-if __name__ == '__main__':
-    keep_scenario = [0]
-    # model_names = ['yolov8x-worldv2', 'yolov8s-worldv2']
-    # # model_names = ['yolov8s-worldv2']
-    # for model_name in model_names:
-    #     inference_scenario(keep_scenario, model_name)
 
-    inference_api(keep_scenario)
+
+if __name__ == '__main__':
+    keep_scenario = [1]
+    # model_names = ['yolov8x-worldv2', 'yolov8s-worldv2']
+    model_names = ['yolov8x-worldv2']
+    # model_names = ['owl']
+    for model_name in model_names:
+        inference_scenario(keep_scenario, model_name)
+
+    # inference_api(keep_scenario)

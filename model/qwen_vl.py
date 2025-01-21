@@ -27,7 +27,7 @@ def inference_qwenvl(model, image_file, prompt='get the location of the handclap
 def parser_qwenvl(response):
     '''
     Unified format:
-    ref: [string] - class name
+    ref: [string] - cla ss name
     box: [x1, y1, x2, y2] in [0, 1]
     '''
     if '<ref>' not in response:

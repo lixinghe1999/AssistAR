@@ -1,5 +1,5 @@
 from ultralytics import YOLOWorld
-def init_yoloworld(name="yolov8x-world-ego.pt"):
+def init_yoloworld(name="yolov8x-world-ego"):
     # Initialize a YOLO-World model
     model = YOLOWorld(name)  # or select yolov8m/l-world.pt for different sizes
     return model

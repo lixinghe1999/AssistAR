@@ -112,9 +112,7 @@ def evaluate(dataset_dir, auto_label_dir):
         auto_label_path = os.path.join(auto_label, label)
         gt_label_path = os.path.join(gt_label, label)
         mAP = calculate_map50(gt_label_path, auto_label_path)
-        print(f'{label}: {mAP}')
         mAPs.append(mAP)
-
     mAP = np.mean(mAPs)
     print('mAP:', mAP)
     return mAP
